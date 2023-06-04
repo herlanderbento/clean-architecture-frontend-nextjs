@@ -26,19 +26,9 @@ The Clean Architecture, originally presented in a 2012 paper written by Bob Mart
 
 -  Gateways/Repositories: The Gateways (aka Repositories) and Presentation (aka View Models) layers handle communication between the application's business rules and the platform-dependent parts. Gateways provide interfaces to access APIs or databases, while View Models are used to connect user interface components (such as React components) to business logic calls.
 <br>
-<br>
-
-<!-- ```text
-├── @core
-├── components
-├── context
-├── pages
-├── styles
-└── utils
-
-``` -->
 
 ### The folder/group structure of the project takes on the following form:
+
 <br>
 
 ```text
