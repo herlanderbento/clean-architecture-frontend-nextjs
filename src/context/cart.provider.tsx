@@ -3,7 +3,6 @@ import {
   createContext,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { Cart } from "@@core/domain/entities/cart";
