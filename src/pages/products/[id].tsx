@@ -1,37 +1,43 @@
 import { GetStaticPaths, GetStaticProps } from "next";
-import { http } from "@utils/http";
-import { Product } from "@utils/models";
+import { Registry, container } from "@@core/infra/container-registry";
+import { GetProductUseCase } from "@@core/application/product/get-product.use-case";
+import { Product, ProductProps } from "@@core/domain/entities/product";
+import { useContext } from "react";
+import { CartContext } from "@context/cart.provider";
 
 type ProductDetailPageProps = {
-  product: Product
-}
+  product: ProductProps;
+};
 
 export function ProductDetailPage({ product }: ProductDetailPageProps) {
+  const productEntity = new Product({ ...product });
+  const { addProduct } = useContext(CartContext);
   return (
-      <div>
-        <h3>{product?.name}</h3>
-        <label htmlFor="">Preco</label> {product?.price}
-        <button>Adicionar no carrinho</button>
-      </div>
-    )
+    <div>
+      <h3>{productEntity?.name}</h3>
+      <label htmlFor="">Preco</label> {productEntity?.price}
+      <button onClick={() => addProduct(productEntity)}>Adicionar no carrinho</button>
+    </div>
+  );
 }
 
-export default ProductDetailPage
+export default ProductDetailPage;
 
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: [],
-    fallback: "blocking"
-  }
-}
+    fallback: "blocking",
+  };
+};
 
 export const getStaticProps: GetStaticProps = async (ctx) => {
   const { id } = ctx.params || {};
-  const { data: product } = await http.get(`products/${id}`);
+  const useCase = container.get<GetProductUseCase>(Registry.GetProductUseCase);
+  const product = await useCase.execute(+id!);
 
   return {
     props: {
-      product,
+      product: product.toJSON(),
     },
   };
 };

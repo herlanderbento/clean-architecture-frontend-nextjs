@@ -1,4 +1,3 @@
-import { Product } from "@utils/models";
 import {
   PropsWithChildren,
   createContext,
@@ -7,74 +6,78 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Cart } from "@@core/domain/entities/cart";
+import { Registry, container } from "../@core/infra/container-registry";
+import { AddProductInCartUseCase } from "../@core/application/cart/add-product-in-cart.use-case";
+import { Product } from "@@core/domain/entities/product";
+import { RemoveProductFromCartUseCase } from "@@core/application/cart/remove-product-from-cart.use-case";
+import { ClearCartUseCase } from "@@core/application/cart/clear-cart.use-case";
+import { GetCartUseCase } from "@@core/application/cart/get-cart.use-case";
 
 export type CartContextType = {
-  products: Product[];
+  cart: Cart;
   addProduct: (product: Product) => void;
-  removeProduct: (product: Product) => void;
+  removeProduct: (productId: number) => void;
   clear: () => void;
-  total: number | undefined;
+  reload: () => void;
 };
 
 export const defaultContext: CartContextType = {
-  products: [],
-  addProduct: function (product: Product): void {
-    throw new Error("Function not implemented.");
-  },
-  removeProduct: function (product: Product): void {
-    throw new Error("Function not implemented.");
-  },
-  clear: function (): void {
-    throw new Error("Function not implemented.");
-  },
-  total: 0,
+  cart: new Cart({ products: [] }),
+  addProduct: (product: Product): void => {},
+  removeProduct: (productId: number): void => {},
+  clear: (): void => {},
+  reload: (): void => {},
 };
 
 export const CartContext = createContext(defaultContext);
 
+const addProductUseCase = container.get<AddProductInCartUseCase>(
+  Registry.AddProductInCartUseCase
+);
+const removeProductUseCase = container.get<RemoveProductFromCartUseCase>(
+  Registry.RemoveProductFromCartUseCase
+);
+const clearCartUseCase = container.get<ClearCartUseCase>(
+  Registry.ClearCartUseCase
+);
+const getCartUseCase = container.get<GetCartUseCase>(Registry.GetCartUseCase);
+
 export function CartProvider({ children }: PropsWithChildren) {
-  const [products, setProducts] = useState<Product[] | null>(null);
-
-  useEffect(() => {
-    setProducts(JSON.parse(localStorage.getItem("products") || "[]"));
-  }, []);
-
-  useEffect(() => {
-    if (!products) {
-      return;
-    }
-    localStorage.setItem("products", JSON.stringify(products));
-  }, [products]);
+  const [cart, setCart] = useState<Cart>(defaultContext.cart);
 
   const addProduct = useCallback((product: Product) => {
-    setProducts((products) => [...products!, product]);
+    const cart = addProductUseCase.execute(product);
+    setCart(cart);
   }, []);
 
-  const removeProduct = useCallback((product: Product) => {
-    setProducts((products) =>
-      products!.filter((products) => products.id !== product.id)
-    );
+  const removeProduct = useCallback((productId: number) => {
+    const cart = removeProductUseCase.execute(productId);
+    setCart(cart);
   }, []);
-
-  const total = useMemo(() => {
-    if (!products) {
-      return 0;
-    }
-    products?.reduce((acc, product) => acc + product.price, 0);
-  }, [products]);
 
   const clear = useCallback(() => {
-    setProducts([]);
+    const cart = clearCartUseCase.execute();
+    setCart(cart);
   }, []);
+
+  const reload = useCallback(() => {
+    const cart = getCartUseCase.execute();
+    setCart(cart);
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   return (
     <CartContext.Provider
       value={{
-        products: products || [],
+        cart,
         addProduct,
         removeProduct,
         clear,
-        total,
+        reload
       }}
     >
       {children}

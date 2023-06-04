@@ -1,13 +1,13 @@
-import { CartContext } from "@context/cart.provider";
 import { useContext } from "react";
+import { CartContext } from "@context/cart.provider";
 
 export function MyCart() {
-  const cartContext = useContext(CartContext);
-  console.log(cartContext.total);
+  const { cart } = useContext(CartContext);
+
   return (
     <>
       <nav>
-        Cart - Total {cartContext.total} | Items {cartContext.products.length}
+        Cart - Total {cart.total} | Items {cart.products.length}
       </nav>
     </>
   );
